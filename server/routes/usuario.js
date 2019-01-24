@@ -7,6 +7,10 @@ const Usuario = require('../models/usuario');
 
 const app = express();
 
+// ===================================
+//Obtener lista de Usuarios por página
+// ===================================
+
 app.get('/usuario', function(req, res) {
 
     let desde = req.query.desde || 0;
@@ -15,7 +19,7 @@ app.get('/usuario', function(req, res) {
     let limite = req.query.limite || 5;
     limite = Number(limite);
 
-    Usuario.find({})
+    Usuario.find({ state: true }, 'nombre email role state google img') // primer argumento: Condición, segundo argumento: campos deseados
         .skip(desde)
         .limit(limite)
         .exec((err, usuarios) => {
@@ -28,14 +32,24 @@ app.get('/usuario', function(req, res) {
                 });
             }
 
-            res.json({
-                ok: true,
-                usuarios
+            //Contar registros
+            Usuario.count({ state: true }, (err, conteo) => {
+
+                res.json({
+                    ok: true,
+                    usuarios,
+                    cuantos: conteo
+                });
+
             });
 
         });
 
 });
+
+// ===================================
+// Agregar un usuario
+// ===================================
 
 app.post('/usuario', function(req, res) {
 
@@ -59,7 +73,7 @@ app.post('/usuario', function(req, res) {
             });
         }
 
-        //No mandar el password
+        //Para no mandar el password
         // usuarioDB.password = null;
 
         // Respuesta correcta
@@ -70,6 +84,10 @@ app.post('/usuario', function(req, res) {
     });
 
 });
+
+// ===================================
+// Actualizar un usuario
+// ===================================
 
 app.put('/usuario/:id', function(req, res) {
 
@@ -94,8 +112,47 @@ app.put('/usuario/:id', function(req, res) {
 
 });
 
-app.delete('/usuario', function(req, res) {
-    res.json('delete Usuario');
+// ===================================
+// Borrar un usuario de la BD fisicamente o cambiando el estado state a false
+// ===================================
+
+app.delete('/usuario/:id', function(req, res) {
+
+    let id = req.params.id;
+
+
+    let cambiaEstado = {
+        state: false
+    };
+    // Usuario.findByIdAndRemove(id, (err, usuarioBorrado) => { // borrar usuario fisicamente
+    Usuario.findByIdAndUpdate(id, cambiaEstado, { new: true }, (err, usuarioBorrado) => {
+
+        // En caso de error
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+
+        // En caso de no haber un usuario 
+        if (!usuarioBorrado) {
+            return res.status(400).json({
+                ok: false,
+                err: {
+                    message: 'Usuario no encontrado'
+                }
+            });
+        }
+
+        res.json({
+            ok: true,
+            usuario: usuarioBorrado
+        });
+
+
+    });
+
 });
 
 module.exports = app;
