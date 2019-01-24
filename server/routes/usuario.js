@@ -47,10 +47,23 @@ app.post('/usuario', function(req, res) {
 app.put('/usuario/:id', function(req, res) {
 
     let id = req.params.id;
+    let body = req.body;
 
-    res.json({
-        id
-    });
+    Usuario.findByIdAndUpdate(id, body, { new: true }, (err, usuarioDB) => {
+
+        // En caso de error
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+        res.json({
+            ok: true,
+            usuario: usuarioDB
+        });
+    })
+
 });
 
 app.delete('/usuario', function(req, res) {
