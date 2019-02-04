@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const _ = require('underscore');
 
 const Usuario = require('../models/usuario');
+const { verificaToken, verificaAdmin_Role } = require('../middlewares/autenticacion')
 
 const app = express();
 
@@ -11,7 +12,7 @@ const app = express();
 //Obtener lista de Usuarios por página
 // ===================================
 
-app.get('/usuario', function(req, res) {
+app.get('/usuario', verificaToken, (req, res) => {
 
     let desde = req.query.desde || 0;
     desde = Number(desde);
@@ -51,7 +52,7 @@ app.get('/usuario', function(req, res) {
 // Agregar un usuario
 // ===================================
 
-app.post('/usuario', function(req, res) {
+app.post('/usuario', [verificaToken, verificaAdmin_Role], function(req, res) {
 
     let body = req.body; //Obtener información del POST
 
@@ -89,7 +90,7 @@ app.post('/usuario', function(req, res) {
 // Actualizar un usuario
 // ===================================
 
-app.put('/usuario/:id', function(req, res) {
+app.put('/usuario/:id', [verificaToken, verificaAdmin_Role], function(req, res) {
 
     let id = req.params.id;
     //Seleccionar campos validos para actualizar usando la libreria pick
@@ -116,7 +117,7 @@ app.put('/usuario/:id', function(req, res) {
 // Borrar un usuario de la BD fisicamente o cambiando el estado state a false
 // ===================================
 
-app.delete('/usuario/:id', function(req, res) {
+app.delete('/usuario/:id', [verificaToken, verificaAdmin_Role], function(req, res) {
 
     let id = req.params.id;
 
